@@ -1,0 +1,10 @@
+name: VeldoriaCore
+version: 1.1
+main: ru.veldoria.core.VeldoriaCore
+api-version: 1.21
+softdepend: [AuraSkills]
+commands:
+  veldoria:
+    description: Главная команда плагина
+    permission: veldoria.admin
+    usage: /veldoria <give|reload>
