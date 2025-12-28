@@ -6,15 +6,15 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.veldoria.core.commands.VeldoriaCommand;
 import ru.veldoria.core.listeners.SpawnerInteractionListener;
+import ru.veldoria.core.utils.ProtectionHook;
 
 public final class VeldoriaCore extends JavaPlugin {
 
     private static VeldoriaCore instance;
     private AuraSkillsApi auraSkills;
+    private ProtectionHook protectionHook;
 
-    // Ключ для проверки кирки
     public final NamespacedKey pickaxeKey = new NamespacedKey(this, "spawner_extractor");
-    // Ключ для накопления бонуса неудач (Bad Luck Protection)
     public final NamespacedKey pityKey = new NamespacedKey(this, "mining_pity_bonus");
 
     @Override
@@ -23,11 +23,13 @@ public final class VeldoriaCore extends JavaPlugin {
 
         if (Bukkit.getPluginManager().getPlugin("AuraSkills") != null) {
             auraSkills = AuraSkillsApi.get();
-            getLogger().info("AuraSkills подключен.");
+            getLogger().info("AuraSkills найден.");
         }
 
-        // Регистрируем новую единую команду
-        getCommand("veldoria").setExecutor(new VeldoriaCommand(this));
+        protectionHook = new ProtectionHook();
+        getLogger().info("Защита регионов (WG/Towny) инициализирована.");
+
+        getCommand("veldoriacore").setExecutor(new VeldoriaCommand());
 
         getServer().getPluginManager().registerEvents(new SpawnerInteractionListener(this), this);
     }
@@ -38,5 +40,9 @@ public final class VeldoriaCore extends JavaPlugin {
 
     public AuraSkillsApi getAuraSkills() {
         return auraSkills;
+    }
+
+    public ProtectionHook getProtectionHook() {
+        return protectionHook;
     }
 }

@@ -63,6 +63,13 @@ public class SpawnerInteractionListener implements Listener {
 
         event.setCancelled(true);
 
+        // === ПРОВЕРКА ПРИВАТОВ ===
+        if (!plugin.getProtectionHook().canInteract(player, block)) {
+            player.sendMessage(Component.text("Вы не можете добывать спавнеры на чужой территории!", NamedTextColor.RED));
+            return;
+        }
+        // =========================
+
         double chance = calculateTotalChance(player);
         openGui(player, block, chance);
     }
@@ -75,19 +82,16 @@ public class SpawnerInteractionListener implements Listener {
 
     private double calculateTotalChance(Player player) {
         double total = BASE_CHANCE;
-
         if (plugin.getAuraSkills() != null) {
             var user = plugin.getAuraSkills().getUser(player.getUniqueId());
             if (user != null) {
                 total += user.getStatLevel(Stats.LUCK) * CHANCE_PER_LUCK;
             }
         }
-
         Double pityBonus = player.getPersistentDataContainer().get(plugin.pityKey, PersistentDataType.DOUBLE);
         if (pityBonus != null) {
             total += pityBonus;
         }
-
         return Math.min(100.0, total);
     }
 
@@ -172,7 +176,7 @@ public class SpawnerInteractionListener implements Listener {
 
             @Override
             public void run() {
-                if (ticks >= 40) { // 2 секунды анимации
+                if (ticks >= 40) {
                     finalizeMining(player, spawnerBlock, chance);
                     this.cancel();
                     return;
@@ -206,27 +210,16 @@ public class SpawnerInteractionListener implements Listener {
         Location loc = spawnerBlock.getLocation().add(0.5, 0.5, 0.5);
 
         if (roll <= chance) {
-            // SUCCESS (УСПЕХ)
             if (spawnerBlock.getState() instanceof CreatureSpawner spawner) {
                 giveSpawnerItem(player, spawner, loc);
             }
             spawnerBlock.setType(Material.AIR);
-
             player.getPersistentDataContainer().set(plugin.pityKey, PersistentDataType.DOUBLE, 0.0);
-
             player.sendMessage(Component.text("Успех! Спавнер добыт.", NamedTextColor.GREEN, TextDecoration.BOLD));
-
             loc.getWorld().playSound(loc, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-
-            // Зеленые частицы (как от костной муки/счастливого жителя)
             loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 30, 0.5, 0.5, 0.5, 0.1);
-
-            // Исправленная частица (Оранжевые искры триал-спавнера)
-            // Если вдруг подчеркнет красным (зависит от версии API), замени на Particle.TOTEM_OF_UNDYING
-            loc.getWorld().spawnParticle(Particle.TRIAL_SPAWNER_DETECTION, loc, 50, 0.2, 0.2, 0.2, 0.1);
-
+            loc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc, 50, 0.2, 0.5, 0.2, 0.1);
         } else {
-            // FAIL (НЕУДАЧА)
             double currentPity = player.getPersistentDataContainer().getOrDefault(plugin.pityKey, PersistentDataType.DOUBLE, 0.0);
             double newPity = currentPity + FAIL_BONUS;
             player.getPersistentDataContainer().set(plugin.pityKey, PersistentDataType.DOUBLE, newPity);
@@ -243,7 +236,6 @@ public class SpawnerInteractionListener implements Listener {
 
     private void giveSpawnerItem(Player player, CreatureSpawner spawnerState, Location dropLoc) {
         EntityType type = spawnerState.getSpawnedType();
-
         ItemStack item = new ItemStack(Material.SPAWNER);
         BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
         CreatureSpawner itemSpawnerState = (CreatureSpawner) meta.getBlockState();
@@ -254,12 +246,10 @@ public class SpawnerInteractionListener implements Listener {
             mobName = type.name().toLowerCase().replace("_", " ");
         } else {
             mobName = "пустой";
-            // Не устанавливаем тип, оставляем дефолтным
         }
 
         meta.setBlockState(itemSpawnerState);
         meta.displayName(Component.text("Спавнер: " + mobName, NamedTextColor.GOLD));
-
         item.setItemMeta(meta);
 
         if (player.isOnline()) {

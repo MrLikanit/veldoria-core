@@ -1,10 +1,10 @@
 name: VeldoriaCore
-version: 1.1
+version: 1.3
 main: ru.veldoria.core.VeldoriaCore
 api-version: 1.21
-softdepend: [AuraSkills]
+softdepend: [AuraSkills, WorldGuard, Towny]
 commands:
-  veldoria:
-    description: Главная команда плагина
+  veldoriacore:
+    description: Основная команда плагина
     permission: veldoria.admin
-    usage: /veldoria <give|reload>
+    usage: /veldoriacore give <item>
