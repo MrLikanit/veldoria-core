@@ -23,12 +23,10 @@ public class ProtectionHook {
     }
 
     public boolean canInteract(Player player, Block block) {
-        // 1. Проверка WorldGuard
         if (hasWorldGuard) {
             if (!canWorldGuard(player, block)) return false;
         }
 
-        // 2. Проверка Towny
         if (hasTowny) {
             if (!canTowny(player, block)) return false;
         }

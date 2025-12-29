@@ -1,0 +1,17 @@
+# Настройки шансов и механик
+settings:
+  base-chance: 20.0
+  chance-per-luck: 0.5
+  fail-bonus: 5.0
+
+# Настройки предметов
+items:
+  spawner-pickaxe:
+    material: GOLDEN_PICKAXE
+    name: "<gold>⛏ Экстрактор Спавнеров"
+    lore:
+      - "<gray>Нажмите ПКМ по спавнеру,"
+      - "<gray>чтобы попытаться добыть его."
+      - "<dark_red>Одноразовый предмет."
+    # Если нужно использовать кастомную модель (Resource Pack)
+    custom-model-data: 0

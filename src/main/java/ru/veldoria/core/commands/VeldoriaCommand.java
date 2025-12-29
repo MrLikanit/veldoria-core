@@ -9,6 +9,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.veldoria.core.VeldoriaCore;
 import ru.veldoria.core.items.VeldoriaItems;
 
 import java.util.List;
@@ -18,17 +19,29 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!sender.hasPermission("veldoria.admin")) {
-            // Для игрока без прав команды как бы не существует
             sender.sendMessage(Component.text("Unknown command. Type \"/help\" for help.", NamedTextColor.WHITE));
             return true;
         }
 
-        if (args.length < 2) {
-            sender.sendMessage(Component.text("Использование: /veldoriacore give <item>", NamedTextColor.RED));
+        if (args.length < 1) {
+            sender.sendMessage(Component.text("Использование: /veldoriacore <give|reload>", NamedTextColor.RED));
             return true;
         }
 
+        // --- КОМАНДА RELOAD ---
+        if (args[0].equalsIgnoreCase("reload")) {
+            VeldoriaCore.getInstance().reloadConfig();
+            sender.sendMessage(Component.text("Конфигурация VeldoriaCore перезагружена!", NamedTextColor.GREEN));
+            return true;
+        }
+
+        // --- КОМАНДА GIVE ---
         if (args[0].equalsIgnoreCase("give")) {
+            if (args.length < 2) {
+                sender.sendMessage(Component.text("Укажите предмет: /veldoriacore give pickaxe", NamedTextColor.RED));
+                return true;
+            }
+
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("Только для игроков.");
                 return true;
@@ -45,18 +58,18 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
             }
             return true;
         }
+
         return true;
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        // Если нет прав — не показываем ничего
         if (!sender.hasPermission("veldoria.admin")) {
             return List.of();
         }
 
         if (args.length == 1) {
-            return List.of("give");
+            return List.of("give", "reload");
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {

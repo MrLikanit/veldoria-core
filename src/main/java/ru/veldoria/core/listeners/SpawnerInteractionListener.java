@@ -25,18 +25,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 import ru.veldoria.core.VeldoriaCore;
 
 import java.security.SecureRandom;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SpawnerInteractionListener implements Listener {
 
     private final VeldoriaCore plugin;
     private final String GUI_TITLE = "Добыча спавнера";
-
-    private final double BASE_CHANCE = 20.0;
-    private final double CHANCE_PER_LUCK = 0.5;
-    private final double FAIL_BONUS = 5.0;
-
     private final SecureRandom random = new SecureRandom();
+
+    private final Set<Location> activeRituals = new HashSet<>();
 
     public SpawnerInteractionListener(VeldoriaCore plugin) {
         this.plugin = plugin;
@@ -63,12 +62,16 @@ public class SpawnerInteractionListener implements Listener {
 
         event.setCancelled(true);
 
-        // === ПРОВЕРКА ПРИВАТОВ ===
+        if (activeRituals.contains(block.getLocation())) {
+            player.sendMessage(Component.text("Этот спавнер уже добывают!", NamedTextColor.RED));
+            player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1, 1);
+            return;
+        }
+
         if (!plugin.getProtectionHook().canInteract(player, block)) {
             player.sendMessage(Component.text("Вы не можете добывать спавнеры на чужой территории!", NamedTextColor.RED));
             return;
         }
-        // =========================
 
         double chance = calculateTotalChance(player);
         openGui(player, block, chance);
@@ -81,11 +84,16 @@ public class SpawnerInteractionListener implements Listener {
     }
 
     private double calculateTotalChance(Player player) {
-        double total = BASE_CHANCE;
+        // Читаем настройки из конфига каждый раз (чтобы работало после перезагрузки)
+        double baseChance = plugin.getConfig().getDouble("settings.base-chance", 20.0);
+        double chancePerLuck = plugin.getConfig().getDouble("settings.chance-per-luck", 0.5);
+
+        double total = baseChance;
+
         if (plugin.getAuraSkills() != null) {
             var user = plugin.getAuraSkills().getUser(player.getUniqueId());
             if (user != null) {
-                total += user.getStatLevel(Stats.LUCK) * CHANCE_PER_LUCK;
+                total += user.getStatLevel(Stats.LUCK) * chancePerLuck;
             }
         }
         Double pityBonus = player.getPersistentDataContainer().get(plugin.pityKey, PersistentDataType.DOUBLE);
@@ -167,6 +175,13 @@ public class SpawnerInteractionListener implements Listener {
             return;
         }
 
+        if (activeRituals.contains(spawnerBlock.getLocation())) {
+            player.sendMessage(Component.text("Кто-то уже добывает этот спавнер!", NamedTextColor.RED));
+            player.closeInventory();
+            return;
+        }
+        activeRituals.add(spawnerBlock.getLocation());
+
         handItem.setAmount(handItem.getAmount() - 1);
         player.closeInventory();
 
@@ -176,8 +191,17 @@ public class SpawnerInteractionListener implements Listener {
 
             @Override
             public void run() {
+                // Если блок сломали во время ритуала (грифинг)
+                if (spawnerBlock.getType() != Material.SPAWNER) {
+                    activeRituals.remove(spawnerBlock.getLocation());
+                    this.cancel();
+                    return;
+                }
+
                 if (ticks >= 40) {
                     finalizeMining(player, spawnerBlock, chance);
+                    // --- ОСВОБОЖДАЕМ БЛОК ---
+                    activeRituals.remove(spawnerBlock.getLocation());
                     this.cancel();
                     return;
                 }
@@ -220,13 +244,15 @@ public class SpawnerInteractionListener implements Listener {
             loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 30, 0.5, 0.5, 0.5, 0.1);
             loc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc, 50, 0.2, 0.5, 0.2, 0.1);
         } else {
+            double failBonus = plugin.getConfig().getDouble("settings.fail-bonus", 5.0);
+
             double currentPity = player.getPersistentDataContainer().getOrDefault(plugin.pityKey, PersistentDataType.DOUBLE, 0.0);
-            double newPity = currentPity + FAIL_BONUS;
+            double newPity = currentPity + failBonus;
             player.getPersistentDataContainer().set(plugin.pityKey, PersistentDataType.DOUBLE, newPity);
 
             player.sendMessage(Component.text("Неудача! Энергия рассеялась.", NamedTextColor.RED, TextDecoration.BOLD));
             player.sendMessage(Component.text("Бонус неудачи накоплен: ", NamedTextColor.GRAY)
-                    .append(Component.text("+" + FAIL_BONUS + "%", NamedTextColor.AQUA)));
+                    .append(Component.text("+" + failBonus + "%", NamedTextColor.AQUA)));
 
             loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
             loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 1);

@@ -21,16 +21,17 @@ public final class VeldoriaCore extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        saveDefaultConfig();
+
         if (Bukkit.getPluginManager().getPlugin("AuraSkills") != null) {
             auraSkills = AuraSkillsApi.get();
             getLogger().info("AuraSkills найден.");
         }
 
         protectionHook = new ProtectionHook();
-        getLogger().info("Защита регионов (WG/Towny) инициализирована.");
+        getLogger().info("Защита регионов инициализирована.");
 
         getCommand("veldoriacore").setExecutor(new VeldoriaCommand());
-
         getServer().getPluginManager().registerEvents(new SpawnerInteractionListener(this), this);
     }
 
