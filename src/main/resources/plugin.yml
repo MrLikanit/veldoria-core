@@ -1,5 +1,5 @@
 name: VeldoriaCore
-version: 1.3
+version: 1.4
 main: ru.veldoria.core.VeldoriaCore
 api-version: 1.21
 softdepend: [AuraSkills, WorldGuard, Towny]

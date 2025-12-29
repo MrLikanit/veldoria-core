@@ -28,14 +28,12 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // --- КОМАНДА RELOAD ---
         if (args[0].equalsIgnoreCase("reload")) {
             VeldoriaCore.getInstance().reloadConfig();
             sender.sendMessage(Component.text("Конфигурация VeldoriaCore перезагружена!", NamedTextColor.GREEN));
             return true;
         }
 
-        // --- КОМАНДА GIVE ---
         if (args[0].equalsIgnoreCase("give")) {
             if (args.length < 2) {
                 sender.sendMessage(Component.text("Укажите предмет: /veldoriacore give pickaxe", NamedTextColor.RED));
@@ -52,6 +50,10 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
                 case "pickaxe":
                     player.getInventory().addItem(VeldoriaItems.getSpawnerPickaxe());
                     player.sendMessage(Component.text("Вы получили Экстрактор.", NamedTextColor.GREEN));
+                    break;
+                case "trap":
+                    player.getInventory().addItem(VeldoriaItems.getPvpTrap());
+                    player.sendMessage(Component.text("Вы получили Якорь Бездны.", NamedTextColor.RED));
                     break;
                 default:
                     player.sendMessage(Component.text("Предмет не найден: " + itemType, NamedTextColor.RED));
@@ -73,8 +75,9 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return List.of("pickaxe");
+            return List.of("pickaxe", "trap");
         }
+
 
         return List.of();
     }

@@ -23,6 +23,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.veldoria.core.VeldoriaCore;
+import ru.veldoria.core.utils.ColorUtils;
 
 import java.security.SecureRandom;
 import java.util.HashSet;
@@ -34,7 +35,6 @@ public class SpawnerInteractionListener implements Listener {
     private final VeldoriaCore plugin;
     private final String GUI_TITLE = "Добыча спавнера";
     private final SecureRandom random = new SecureRandom();
-
     private final Set<Location> activeRituals = new HashSet<>();
 
     public SpawnerInteractionListener(VeldoriaCore plugin) {
@@ -45,7 +45,7 @@ public class SpawnerInteractionListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         if (isSpawnerPickaxe(event.getPlayer().getInventory().getItemInMainHand())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(Component.text("Этот предмет нельзя использовать как обычную кирку!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(event.getPlayer(), "&cЭтот предмет нельзя использовать как обычную кирку!");
         }
     }
 
@@ -63,13 +63,13 @@ public class SpawnerInteractionListener implements Listener {
         event.setCancelled(true);
 
         if (activeRituals.contains(block.getLocation())) {
-            player.sendMessage(Component.text("Этот спавнер уже добывают!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "errors.trap-exists");
             player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1, 1);
             return;
         }
 
         if (!plugin.getProtectionHook().canInteract(player, block)) {
-            player.sendMessage(Component.text("Вы не можете добывать спавнеры на чужой территории!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "errors.region-deny");
             return;
         }
 
@@ -84,9 +84,8 @@ public class SpawnerInteractionListener implements Listener {
     }
 
     private double calculateTotalChance(Player player) {
-        // Читаем настройки из конфига каждый раз (чтобы работало после перезагрузки)
-        double baseChance = plugin.getConfig().getDouble("settings.base-chance", 20.0);
-        double chancePerLuck = plugin.getConfig().getDouble("settings.chance-per-luck", 0.5);
+        double baseChance = plugin.getConfig().getDouble("items.spawner-pickaxe.settings.base-chance", 20.0);
+        double chancePerLuck = plugin.getConfig().getDouble("items.spawner-pickaxe.settings.chance-per-luck", 0.5);
 
         double total = baseChance;
 
@@ -96,6 +95,7 @@ public class SpawnerInteractionListener implements Listener {
                 total += user.getStatLevel(Stats.LUCK) * chancePerLuck;
             }
         }
+
         Double pityBonus = player.getPersistentDataContainer().get(plugin.pityKey, PersistentDataType.DOUBLE);
         if (pityBonus != null) {
             total += pityBonus;
@@ -164,22 +164,23 @@ public class SpawnerInteractionListener implements Listener {
         ItemStack handItem = player.getInventory().getItemInMainHand();
 
         if (!isSpawnerPickaxe(handItem)) {
-            player.sendMessage(Component.text("У вас нет необходимой кирки в руке!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "errors.no-pickaxe");
             player.closeInventory();
             return;
         }
 
         if (spawnerBlock.getType() != Material.SPAWNER) {
-            player.sendMessage(Component.text("Блок больше не является спавнером.", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "errors.not-spawner");
             player.closeInventory();
             return;
         }
 
         if (activeRituals.contains(spawnerBlock.getLocation())) {
-            player.sendMessage(Component.text("Кто-то уже добывает этот спавнер!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "errors.trap-exists");
             player.closeInventory();
             return;
         }
+
         activeRituals.add(spawnerBlock.getLocation());
 
         handItem.setAmount(handItem.getAmount() - 1);
@@ -191,7 +192,6 @@ public class SpawnerInteractionListener implements Listener {
 
             @Override
             public void run() {
-                // Если блок сломали во время ритуала (грифинг)
                 if (spawnerBlock.getType() != Material.SPAWNER) {
                     activeRituals.remove(spawnerBlock.getLocation());
                     this.cancel();
@@ -200,7 +200,6 @@ public class SpawnerInteractionListener implements Listener {
 
                 if (ticks >= 40) {
                     finalizeMining(player, spawnerBlock, chance);
-                    // --- ОСВОБОЖДАЕМ БЛОК ---
                     activeRituals.remove(spawnerBlock.getLocation());
                     this.cancel();
                     return;
@@ -226,7 +225,7 @@ public class SpawnerInteractionListener implements Listener {
 
     private void finalizeMining(Player player, Block spawnerBlock, double chance) {
         if (spawnerBlock.getType() != Material.SPAWNER) {
-            player.sendMessage(Component.text("Ритуал прерван: Спавнер исчез!", NamedTextColor.RED));
+            ColorUtils.sendActionBar(player, "mining.interrupted");
             return;
         }
 
@@ -238,21 +237,23 @@ public class SpawnerInteractionListener implements Listener {
                 giveSpawnerItem(player, spawner, loc);
             }
             spawnerBlock.setType(Material.AIR);
+
             player.getPersistentDataContainer().set(plugin.pityKey, PersistentDataType.DOUBLE, 0.0);
-            player.sendMessage(Component.text("Успех! Спавнер добыт.", NamedTextColor.GREEN, TextDecoration.BOLD));
+
+            player.sendMessage(ColorUtils.getMsg("mining.success"));
+
             loc.getWorld().playSound(loc, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
             loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 30, 0.5, 0.5, 0.5, 0.1);
             loc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc, 50, 0.2, 0.5, 0.2, 0.1);
+
         } else {
-            double failBonus = plugin.getConfig().getDouble("settings.fail-bonus", 5.0);
+            double failBonus = plugin.getConfig().getDouble("items.spawner-pickaxe.settings.fail-bonus", 5.0);
 
             double currentPity = player.getPersistentDataContainer().getOrDefault(plugin.pityKey, PersistentDataType.DOUBLE, 0.0);
             double newPity = currentPity + failBonus;
             player.getPersistentDataContainer().set(plugin.pityKey, PersistentDataType.DOUBLE, newPity);
 
-            player.sendMessage(Component.text("Неудача! Энергия рассеялась.", NamedTextColor.RED, TextDecoration.BOLD));
-            player.sendMessage(Component.text("Бонус неудачи накоплен: ", NamedTextColor.GRAY)
-                    .append(Component.text("+" + failBonus + "%", NamedTextColor.AQUA)));
+            ColorUtils.sendActionBar(player, ColorUtils.getMsg("mining.fail", "%bonus%", String.valueOf(failBonus)));
 
             loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
             loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 1);
@@ -287,18 +288,10 @@ public class SpawnerInteractionListener implements Listener {
         }
     }
 
-    private static class SpawnerHolder implements org.bukkit.inventory.InventoryHolder {
-        final Block block;
-        final double chance;
-
-        public SpawnerHolder(Block block, double chance) {
-            this.block = block;
-            this.chance = chance;
-        }
-
+    private record SpawnerHolder(Block block, double chance) implements org.bukkit.inventory.InventoryHolder {
         @Override
         public @org.jetbrains.annotations.NotNull Inventory getInventory() {
-            return null;
+            return Bukkit.createInventory(null, 9);
         }
     }
 }
