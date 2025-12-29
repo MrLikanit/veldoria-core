@@ -4,10 +4,11 @@ import dev.aurelium.auraskills.api.AuraSkillsApi;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.veldoria.core.commands.DisenchantCommand;
 import ru.veldoria.core.commands.VeldoriaCommand;
-import ru.veldoria.core.listeners.PvpTrapListener;
-import ru.veldoria.core.listeners.SpawnerInteractionListener;
+import ru.veldoria.core.listeners.*;
 import ru.veldoria.core.managers.ArenaManager;
 import ru.veldoria.core.utils.ProtectionHook;
 
@@ -40,7 +41,7 @@ public final class VeldoriaCore extends JavaPlugin {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-        loadMessages(); // Загружаем сообщения
+        loadMessages();
 
         if (Bukkit.getPluginManager().getPlugin("AuraSkills") != null) {
             auraSkills = AuraSkillsApi.get();
@@ -50,14 +51,20 @@ public final class VeldoriaCore extends JavaPlugin {
         arenaManager = new ArenaManager(this);
 
         getCommand("veldoriacore").setExecutor(new VeldoriaCommand());
+        getCommand("disenchant").setExecutor(new DisenchantCommand());
 
-        getServer().getPluginManager().registerEvents(new SpawnerInteractionListener(this), this);
-        getServer().getPluginManager().registerEvents(new PvpTrapListener(this), this);
+        PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(new SpawnerInteractionListener(this), this);
+        pm.registerEvents(new PvpTrapListener(this), this);
+        pm.registerEvents(new DisenchantListener(this), this);
+        pm.registerEvents(new DeathListener(), this);
     }
 
     @Override
     public void onDisable() {
-        if (arenaManager != null) arenaManager.disable();
+        if (arenaManager != null) {
+            arenaManager.disable();
+        }
     }
 
     public void loadMessages() {

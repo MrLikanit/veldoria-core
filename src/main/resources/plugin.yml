@@ -1,10 +1,14 @@
 name: VeldoriaCore
-version: 1.4
+version: 1.5
 main: ru.veldoria.core.VeldoriaCore
 api-version: 1.21
 softdepend: [AuraSkills, WorldGuard, Towny]
 commands:
   veldoriacore:
-    description: Основная команда плагина
+    description: Админ-команда
     permission: veldoria.admin
     usage: /veldoriacore give <item>
+  disenchant:
+    description: Открыть стол снятия чар
+    usage: /disenchant
+    aliases: [disenchanter, disen]

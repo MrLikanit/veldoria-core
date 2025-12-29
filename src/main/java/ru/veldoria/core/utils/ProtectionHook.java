@@ -1,6 +1,6 @@
 package ru.veldoria.core.utils;
 
-import com.palmergames.bukkit.towny.TownyAPI; // НОВЫЙ ИМПОРТ
+import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.TownyPermission;
 import com.palmergames.bukkit.towny.utils.PlayerCacheUtil;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;

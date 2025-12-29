@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.veldoria.core.VeldoriaCore;
 import ru.veldoria.core.items.VeldoriaItems;
+import ru.veldoria.core.utils.ColorUtils;
 
 import java.util.List;
 
@@ -30,13 +31,14 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
 
         if (args[0].equalsIgnoreCase("reload")) {
             VeldoriaCore.getInstance().reloadConfig();
-            sender.sendMessage(Component.text("Конфигурация VeldoriaCore перезагружена!", NamedTextColor.GREEN));
+            VeldoriaCore.getInstance().loadMessages();
+            sender.sendMessage(Component.text("Конфигурация перезагружена!", NamedTextColor.GREEN));
             return true;
         }
 
         if (args[0].equalsIgnoreCase("give")) {
             if (args.length < 2) {
-                sender.sendMessage(Component.text("Укажите предмет: /veldoriacore give pickaxe", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Укажите предмет!", NamedTextColor.RED));
                 return true;
             }
 
@@ -49,11 +51,23 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
             switch (itemType) {
                 case "pickaxe":
                     player.getInventory().addItem(VeldoriaItems.getSpawnerPickaxe());
-                    player.sendMessage(Component.text("Вы получили Экстрактор.", NamedTextColor.GREEN));
+                    player.sendMessage(ColorUtils.format("&aВыдана кирка."));
                     break;
                 case "trap":
                     player.getInventory().addItem(VeldoriaItems.getPvpTrap());
-                    player.sendMessage(Component.text("Вы получили Якорь Бездны.", NamedTextColor.RED));
+                    player.sendMessage(ColorUtils.format("&aВыдана ловушка."));
+                    break;
+                case "random_scroll":
+                    player.getInventory().addItem(VeldoriaItems.getRandomDisenchanter());
+                    player.sendMessage(ColorUtils.format("&aВыдан свиток (Рандом)."));
+                    break;
+                case "select_scroll":
+                    player.getInventory().addItem(VeldoriaItems.getSelectDisenchanter());
+                    player.sendMessage(ColorUtils.format("&aВыдан свиток (Выбор)."));
+                    break;
+                case "clock":
+                    player.getInventory().addItem(VeldoriaItems.getDeathClock());
+                    player.sendMessage(ColorUtils.format("&aВыдана Хроносфера."));
                     break;
                 default:
                     player.sendMessage(Component.text("Предмет не найден: " + itemType, NamedTextColor.RED));
@@ -75,9 +89,8 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return List.of("pickaxe", "trap");
+            return List.of("pickaxe", "trap", "random_scroll", "select_scroll", "clock");
         }
-
 
         return List.of();
     }
