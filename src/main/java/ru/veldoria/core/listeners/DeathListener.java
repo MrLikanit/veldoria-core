@@ -33,31 +33,30 @@ public class DeathListener implements Listener {
             }
         }
 
-        if (clock == null) return;
+        if (clock != null) {
+            event.setKeepInventory(true);
+            event.setKeepLevel(true);
+            event.getDrops().clear();
+            event.setDroppedExp(0);
 
-        event.setKeepInventory(true);
-        event.setKeepLevel(true);
-        event.getDrops().clear();
-        event.setDroppedExp(0);
+            clock.setAmount(clock.getAmount() - 1);
+            player.getInventory().setItem(clockSlot, clock.getAmount() > 0 ? clock : null);
 
-        clock.setAmount(clock.getAmount() - 1);
-        player.getInventory().setItem(clockSlot, clock.getAmount() > 0 ? clock : null);
-
-        List<ItemStack> toRemove = new ArrayList<>();
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() != Material.AIR) {
-                if (item.containsEnchantment(Enchantment.VANISHING_CURSE)) {
-                    toRemove.add(item);
+            List<ItemStack> toRemove = new ArrayList<>();
+            for (ItemStack item : player.getInventory().getContents()) {
+                if (item != null && item.getType() != Material.AIR) {
+                    if (item.containsEnchantment(Enchantment.VANISHING_CURSE)) {
+                        toRemove.add(item);
+                    }
                 }
             }
-        }
+            for (ItemStack item : toRemove) {
+                player.getInventory().remove(item);
+            }
 
-        for (ItemStack item : toRemove) {
-            player.getInventory().remove(item);
+            ColorUtils.sendActionBar(player, "&e⌛ Хроносфера разбилась, но спасла ваши вещи!");
+            player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1, 0.5f);
+            player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 1, 2f);
         }
-
-        ColorUtils.sendActionBar(player, "&e⌛ Хроносфера разбилась, но спасла ваши вещи!");
-        player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1, 0.5f);
-        player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 1, 2f);
     }
 }

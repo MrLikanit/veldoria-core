@@ -9,6 +9,7 @@ errors:
   trap-exists: "&#FF5555Этот спавнер уже добывают!"
   not-spawner: "&#FF5555Это не спавнер."
   no-pickaxe: "&#FF5555У вас нет необходимой кирки!"
+  trap-intersect: "&#FF5555Нельзя создавать арену внутри другой арены!"
 
 trap:
   activate: "&#FF0000☠ ВЫПУЩЕН ЯКОРЬ БЕЗДНЫ!"
@@ -32,3 +33,10 @@ disenchant:
   gui-lore:
     - "&7Нажмите, чтобы снять:"
     - "&e<enchant> <level>"
+
+catcher:
+  success-catch: "&#00FF00Существо заточено в призму!"
+  success-release: "&#00FF00Существо освобождено!"
+  blacklisted: "&#FF5555Это существо слишком могущественно для призмы!"
+  tamed-owner: "&#FF5555Вы не можете украсть чужого питомца!"
+  villager-trade-format: "&8▪ &e%buy1% &7%buy2% &8➡ &a%sell%"

@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -45,6 +46,12 @@ public class PvpTrapListener implements Listener {
 
         if (!plugin.getProtectionHook().canPvp(player, player.getLocation())) {
             ColorUtils.sendActionBar(player, "errors.pvp-deny");
+            return;
+        }
+
+        double radius = plugin.getConfig().getDouble("items.pvp-trap.settings.radius", 8.0);
+        if (!plugin.getArenaManager().canPlaceArena(player.getLocation(), radius)) {
+            ColorUtils.sendActionBar(player, "errors.trap-intersect");
             return;
         }
 

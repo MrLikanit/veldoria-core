@@ -13,6 +13,7 @@ import ru.veldoria.core.managers.ArenaManager;
 import ru.veldoria.core.utils.ProtectionHook;
 
 import java.io.File;
+import java.util.Objects;
 
 public final class VeldoriaCore extends JavaPlugin {
 
@@ -50,14 +51,18 @@ public final class VeldoriaCore extends JavaPlugin {
         protectionHook = new ProtectionHook();
         arenaManager = new ArenaManager(this);
 
-        getCommand("veldoriacore").setExecutor(new VeldoriaCommand());
-        getCommand("disenchant").setExecutor(new DisenchantCommand());
+        // Исправление предупреждения NPE: Objects.requireNonNull
+        Objects.requireNonNull(getCommand("veldoriacore")).setExecutor(new VeldoriaCommand());
+        Objects.requireNonNull(getCommand("disenchant")).setExecutor(new DisenchantCommand());
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new SpawnerInteractionListener(this), this);
         pm.registerEvents(new PvpTrapListener(this), this);
         pm.registerEvents(new DisenchantListener(this), this);
         pm.registerEvents(new DeathListener(), this);
+        pm.registerEvents(new MobCatcherListener(this), this);
+
+        getLogger().info("VeldoriaCore enabled successfully!");
     }
 
     @Override
@@ -75,10 +80,7 @@ public final class VeldoriaCore extends JavaPlugin {
         messagesConfig = YamlConfiguration.loadConfiguration(file);
     }
 
-    public YamlConfiguration getMessages() {
-        return messagesConfig;
-    }
-
+    public YamlConfiguration getMessages() { return messagesConfig; }
     public static VeldoriaCore getInstance() { return instance; }
     public AuraSkillsApi getAuraSkills() { return auraSkills; }
     public ProtectionHook getProtectionHook() { return protectionHook; }

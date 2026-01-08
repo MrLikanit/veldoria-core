@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -92,14 +93,11 @@ public class DisenchantListener implements Listener {
         if (isTopInv) {
             if (slot != SLOT_ITEM && slot != SLOT_SCROLL) {
                 event.setCancelled(true);
-
                 if (slot == SLOT_BUTTON) processRandomDisenchant(player, gui);
                 if (slot >= 27) processSelectDisenchant(player, gui, clicked);
                 return;
             }
-        }
-
-        else {
+        } else {
             if (event.isShiftClick()) {
                 event.setCancelled(true);
                 if (clicked == null || clicked.getType() == Material.AIR) return;
@@ -246,7 +244,10 @@ public class DisenchantListener implements Listener {
         if (item == null || scroll == null) return;
 
         NamespacedKey key = NamespacedKey.fromString(keyStr);
-        Enchantment enchant = org.bukkit.Registry.ENCHANTMENT.get(key);
+        if (key == null) return;
+
+        @SuppressWarnings("deprecation")
+        Enchantment enchant = Registry.ENCHANTMENT.get(key);
 
         if (enchant == null || !item.containsEnchantment(enchant)) {
             player.sendMessage(ColorUtils.format("&cЭтот чар уже снят!"));

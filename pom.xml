@@ -5,7 +5,7 @@
 
     <groupId>ru.veldoria</groupId>
     <artifactId>veldoria-core</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
 
     <name>VeldoriaCore</name>

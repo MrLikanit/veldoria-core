@@ -32,6 +32,7 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
         if (args[0].equalsIgnoreCase("reload")) {
             VeldoriaCore.getInstance().reloadConfig();
             VeldoriaCore.getInstance().loadMessages();
+
             sender.sendMessage(Component.text("Конфигурация перезагружена!", NamedTextColor.GREEN));
             return true;
         }
@@ -69,6 +70,10 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
                     player.getInventory().addItem(VeldoriaItems.getDeathClock());
                     player.sendMessage(ColorUtils.format("&aВыдана Хроносфера."));
                     break;
+                case "prism":
+                    player.getInventory().addItem(VeldoriaItems.getEmptyPrism());
+                    player.sendMessage(ColorUtils.format("&aВыдана Призма Души."));
+                    break;
                 default:
                     player.sendMessage(Component.text("Предмет не найден: " + itemType, NamedTextColor.RED));
             }
@@ -89,7 +94,7 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return List.of("pickaxe", "trap", "random_scroll", "select_scroll", "clock");
+            return List.of("pickaxe", "trap", "random_scroll", "select_scroll", "clock", "prism");
         }
 
         return List.of();
