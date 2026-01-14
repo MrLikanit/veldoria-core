@@ -11,6 +11,9 @@ import ru.veldoria.core.commands.VeldoriaCommand;
 import ru.veldoria.core.listeners.*;
 import ru.veldoria.core.managers.ArenaManager;
 import ru.veldoria.core.utils.ProtectionHook;
+import ru.veldoria.core.commands.PrestigeCommand;
+import ru.veldoria.core.managers.PrestigeManager;
+import ru.veldoria.core.listeners.PrestigeListener;
 
 import java.io.File;
 import java.util.Objects;
@@ -22,6 +25,7 @@ public final class VeldoriaCore extends JavaPlugin {
     private ProtectionHook protectionHook;
     private ArenaManager arenaManager;
     private YamlConfiguration messagesConfig;
+    private PrestigeManager prestigeManager;
 
     public final NamespacedKey pickaxeKey = new NamespacedKey(this, "spawner_extractor");
     public final NamespacedKey pityKey = new NamespacedKey(this, "mining_pity_bonus");
@@ -50,10 +54,12 @@ public final class VeldoriaCore extends JavaPlugin {
 
         protectionHook = new ProtectionHook();
         arenaManager = new ArenaManager(this);
+        prestigeManager = new PrestigeManager(this);
 
-        // Исправление предупреждения NPE: Objects.requireNonNull
         Objects.requireNonNull(getCommand("veldoriacore")).setExecutor(new VeldoriaCommand());
         Objects.requireNonNull(getCommand("disenchant")).setExecutor(new DisenchantCommand());
+        Objects.requireNonNull(getCommand("prestige")).setExecutor(new PrestigeCommand());
+
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new SpawnerInteractionListener(this), this);
@@ -61,6 +67,8 @@ public final class VeldoriaCore extends JavaPlugin {
         pm.registerEvents(new DisenchantListener(this), this);
         pm.registerEvents(new DeathListener(), this);
         pm.registerEvents(new MobCatcherListener(this), this);
+        pm.registerEvents(new PrestigeListener(this), this);
+
 
         getLogger().info("VeldoriaCore enabled successfully!");
     }
@@ -85,4 +93,6 @@ public final class VeldoriaCore extends JavaPlugin {
     public AuraSkillsApi getAuraSkills() { return auraSkills; }
     public ProtectionHook getProtectionHook() { return protectionHook; }
     public ArenaManager getArenaManager() { return arenaManager; }
+    public PrestigeManager getPrestigeManager() { return prestigeManager; }
+
 }

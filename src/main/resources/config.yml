@@ -112,3 +112,39 @@ disenchant:
     - "&7Нажмите, чтобы извлечь:"
     - "&e%enchant%"
 
+prestige-system:
+  enabled: true # Если false - меню не откроется (для вайпов)
+  min-total-level: 200
+
+  multipliers:
+    agility: 1.5
+    fighting: 1.2
+    archery: 1.2
+    defense: 1.2
+    alchemy: 1.0
+    enchanting: 1.0
+    excavation: 0.5
+    farming: 0.5
+    foraging: 0.5
+    mining: 0.5
+    fishing: 0.5
+
+  gui:
+    title: "Престиж Навыков"
+    info-item:
+      material: NETHER_STAR
+      name: "&#00FF00⭐ Статус Престижа"
+      lore-ready:
+        - "&7Ваш прогресс позволяет"
+        - "&7совершить перерождение."
+        - ""
+        - "&7Текущий уровень: &e%total_level%"
+        - "&7Награда: &b%reward% Осколков"
+        - ""
+        - "&aНажмите на зеленую кнопку,"
+        - "&aчтобы подтвердить сброс."
+      lore-not-ready:
+        - "&cВы еще не готовы."
+        - ""
+        - "&7Текущий уровень: &e%total_level% &7/ &6%min_level%"
+        - "&7Вам нужно еще &c%needed% &7уровней."

@@ -1,8 +1,8 @@
 name: VeldoriaCore
-version: 1.6
+version: 1.7
 main: ru.veldoria.core.VeldoriaCore
 api-version: 1.21
-softdepend: [AuraSkills, WorldGuard, Towny]
+softdepend: [AuraSkills, WorldGuard, Towny, PlayerPoints]
 commands:
   veldoriacore:
     description: Админ-команда
@@ -12,3 +12,6 @@ commands:
     description: Открыть стол снятия чар
     usage: /disenchant
     aliases: [disenchanter, disen]
+  prestige:
+    description: Открыть меню престижа
+    usage: /prestige
