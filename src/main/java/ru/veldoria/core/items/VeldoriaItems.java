@@ -42,6 +42,10 @@ public class VeldoriaItems {
         return createItem("items.death-clock", "death_clock_item", true);
     }
 
+    public static ItemStack getStructureCompass() {
+        return createItem("items.structure-compass", "structure_compass_item", true);
+    }
+
     public static ItemStack getEmptyPrism() {
         return createItem("items.soul-prism", "soul_prism_empty", false);
     }
@@ -82,9 +86,14 @@ public class VeldoriaItems {
 
             String tradeFmt = plugin.getMessages().getString("catcher.villager-trade-format", "%buy1% -> %sell%");
 
+            int count = 0;
             for (MerchantRecipe recipe : villager.getRecipes()) {
-                String buy1 = getItemDescription(recipe.getIngredients().get(0));
+                if (count >= 5) {
+                    lore.add(ColorUtils.format("&7...и еще"));
+                    break;
+                }
 
+                String buy1 = getItemDescription(recipe.getIngredients().get(0));
                 String buy2 = "";
                 if (recipe.getIngredients().size() > 1 && recipe.getIngredients().get(1) != null && !recipe.getIngredients().get(1).getType().isAir()) {
                     buy2 = " + " + getItemDescription(recipe.getIngredients().get(1));
@@ -97,6 +106,7 @@ public class VeldoriaItems {
                         .replace("%buy2%", buy2)
                         .replace("%sell%", sell)
                 ));
+                count++;
             }
         }
 
@@ -165,6 +175,8 @@ public class VeldoriaItems {
     public static boolean isDeathClock(ItemStack item) { return checkNbt(item, "death_clock_item"); }
     public static boolean isEmptyPrism(ItemStack item) { return checkNbt(item, "soul_prism_empty"); }
     public static boolean isFilledPrism(ItemStack item) { return checkNbt(item, "soul_prism_filled"); }
+
+    public static boolean isStructureCompass(ItemStack item) { return checkNbt(item, "structure_compass_item"); }
 
     private static ItemStack createItem(String configPath, String nbtKey, boolean unstackable) {
         VeldoriaCore plugin = VeldoriaCore.getInstance();

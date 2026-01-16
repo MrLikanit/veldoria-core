@@ -11,7 +11,7 @@ import ru.veldoria.core.VeldoriaCore;
 public class SoulPrismAnimation {
 
     /**
-     * Анимация всасывания души (Спираль, сужающаяся к центру)
+     * Анимация всасывания души
      */
     public static void playCatchAnimation(Entity target) {
         new BukkitRunnable() {
@@ -45,7 +45,7 @@ public class SoulPrismAnimation {
     }
 
     /**
-     * Анимация освобождения (Взрыв и расширяющееся кольцо)
+     * Анимация освобождения
      */
     public static void playReleaseAnimation(Location center) {
         center.getWorld().spawnParticle(Particle.END_ROD, center, 15, 0.2, 1, 0.2, 0.1);

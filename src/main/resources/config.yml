@@ -12,7 +12,7 @@ items:
     custom-model-data: 0
     settings:
       base-chance: 15.0
-      chance-per-luck: 0.2
+      chance-per-luck: 0.15
       fail-bonus: 5.0
 
   pvp-trap:
@@ -106,6 +106,20 @@ items:
       - WARDEN
       - PLAYER
 
+  structure-compass:
+    material: RECOVERY_COMPASS
+    name: "&#00DDFF🧭 Искатель Пути"
+    lore:
+      - "&7Магический артефакт,"
+      - "&7чувствующий энергию структур."
+      - ""
+      - "&7Нажмите &fПКМ&7, чтобы выбрать"
+      - "&7структуру для поиска."
+    custom-model-data: 106
+    settings:
+      cooldown: 1800 # 30 минут (в секундах)
+      search-radius: 1500 # Радиус поиска
+
 disenchant:
   gui-title: "Магический стол: Извлечение"
   gui-lore:
@@ -148,3 +162,42 @@ prestige-system:
         - ""
         - "&7Текущий уровень: &e%total_level% &7/ &6%min_level%"
         - "&7Вам нужно еще &c%needed% &7уровней."
+
+spawner-manipulation:
+  enabled: true
+
+  change-chance: 1.0
+
+  luck-multiplier: 0.0125
+
+  specific-chances:
+    IRON_GOLEM: 0.25
+    EVOKER: 0.125
+    BREEZE: 0.5
+    VINDICATOR: 0.5
+    WITHER_SKELETON: 0.25
+
+  blacklist:
+    - ENDER_DRAGON
+    - WITHER
+    - WARDEN
+    - ELDER_GUARDIAN
+    - VILLAGER
+    - WANDERING_TRADER
+    - ZOMBIE_VILLAGER
+
+  gui:
+    title: "Настройка Спавнера"
+    info-lore:
+      - "&7Положите &dПризму Души"
+      - "&7в слот, чтобы изменить"
+      - "&7тип моба в спавнере."
+      - ""
+      - "&7Шанс успеха: &e%chance%%"
+
+compass-gui:
+  title: "Выбор структуры (Стр. %page%)"
+  next-page: "&aСледующая страница &8>>>"
+  prev-page: "&8<<< &cПредыдущая страница"
+  structure-icon: "&b%structure%"
+

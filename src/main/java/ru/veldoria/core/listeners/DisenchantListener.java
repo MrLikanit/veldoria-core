@@ -10,11 +10,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -27,6 +23,7 @@ import ru.veldoria.core.items.VeldoriaItems;
 import ru.veldoria.core.utils.ColorUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -57,12 +54,12 @@ public class DisenchantListener implements Listener {
             gui.setItem(i, glass);
         }
 
-        gui.setItem(SLOT_ITEM_BG, createDecoItem(Material.IRON_BARS, "&7⬇ Положите предмет сюда ⬇"));
-        gui.setItem(SLOT_SCROLL_BG, createDecoItem(Material.IRON_BARS, "&7⬇ Положите свиток сюда ⬇"));
+        gui.setItem(SLOT_ITEM_BG, createDecoItem(Material.IRON_BARS, "&7⬇ Положите предмет/книгу ⬇"));
+        gui.setItem(SLOT_SCROLL_BG, createDecoItem(Material.IRON_BARS, "&7⬇ Положите свиток ⬇"));
 
         gui.setItem(SLOT_ITEM, null);
         gui.setItem(SLOT_SCROLL, null);
-        gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&c&lОжидание предметов..."));
+        gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&c&lОжидание..."));
     }
 
     private static ItemStack createDecoItem(Material mat, String name) {
@@ -93,8 +90,17 @@ public class DisenchantListener implements Listener {
         if (isTopInv) {
             if (slot != SLOT_ITEM && slot != SLOT_SCROLL) {
                 event.setCancelled(true);
-                if (slot == SLOT_BUTTON) processRandomDisenchant(player, gui);
-                if (slot >= 27) processSelectDisenchant(player, gui, clicked);
+
+                if (slot == SLOT_BUTTON) {
+                    ItemStack scroll = gui.getItem(SLOT_SCROLL);
+                    if (VeldoriaItems.isRandomDisenchanter(scroll)) {
+                        processRandomDisenchant(player, gui);
+                    }
+                }
+
+                if (slot >= 27) {
+                    processSelectDisenchant(player, gui, clicked);
+                }
                 return;
             }
         } else {
@@ -108,7 +114,7 @@ public class DisenchantListener implements Listener {
                         event.setCurrentItem(null);
                     }
                 } else {
-                    if (gui.getItem(SLOT_ITEM) == null && !clicked.getEnchantments().isEmpty()) {
+                    if (gui.getItem(SLOT_ITEM) == null && !getEnchants(clicked).isEmpty()) {
                         gui.setItem(SLOT_ITEM, clicked.clone());
                         event.setCurrentItem(null);
                     }
@@ -151,29 +157,116 @@ public class DisenchantListener implements Listener {
         }
     }
 
+
+    private void processRandomDisenchant(Player player, Inventory gui) {
+        ItemStack item = gui.getItem(SLOT_ITEM);
+        ItemStack scroll = gui.getItem(SLOT_SCROLL);
+        if (item == null || scroll == null) return;
+
+        if (!VeldoriaItems.isRandomDisenchanter(scroll)) return;
+
+        Map<Enchantment, Integer> enchants = getEnchants(item);
+
+        if (enchants.size() < 2) {
+            player.sendMessage(ColorUtils.getMsg("disenchant.min-enchants"));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            return;
+        }
+
+        List<Enchantment> keys = new ArrayList<>(enchants.keySet());
+        Enchantment chosen = keys.get(ThreadLocalRandom.current().nextInt(keys.size()));
+
+        doDisenchant(player, gui, item, scroll, chosen, enchants.get(chosen));
+    }
+
+    private void processSelectDisenchant(Player player, Inventory gui, ItemStack clickedBook) {
+        if (clickedBook == null || !clickedBook.hasItemMeta()) return;
+
+        String keyStr = clickedBook.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(plugin, "ench_key"), PersistentDataType.STRING);
+        if (keyStr == null) return;
+
+        ItemStack item = gui.getItem(SLOT_ITEM);
+        ItemStack scroll = gui.getItem(SLOT_SCROLL);
+        if (item == null || scroll == null) return;
+
+        if (!VeldoriaItems.isSelectDisenchanter(scroll)) {
+            player.sendMessage(ColorUtils.format("&cНужен Свиток Извлечения (Выбор)!"));
+            return;
+        }
+
+        if (getEnchants(item).size() < 2) {
+            player.sendMessage(ColorUtils.getMsg("disenchant.min-enchants"));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            return;
+        }
+
+        NamespacedKey key = NamespacedKey.fromString(keyStr);
+        if (key == null) return;
+
+        @SuppressWarnings("deprecation")
+        Enchantment enchant = Registry.ENCHANTMENT.get(key);
+
+        if (enchant == null || !getEnchants(item).containsKey(enchant)) {
+            player.sendMessage(ColorUtils.format("&cЭтот чар уже снят!"));
+            updateGuiState(gui);
+            return;
+        }
+
+        doDisenchant(player, gui, item, scroll, enchant, getEnchantLevel(item, enchant));
+    }
+
+    private void doDisenchant(Player player, Inventory gui, ItemStack item, ItemStack scroll, Enchantment enchant, int level) {
+        ItemStack resultBook = new ItemStack(Material.ENCHANTED_BOOK);
+        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) resultBook.getItemMeta();
+        meta.addStoredEnchant(enchant, level, true);
+        resultBook.setItemMeta(meta);
+
+        removeEnchant(item, enchant);
+
+        if (scroll.getAmount() > 1) {
+            scroll.setAmount(scroll.getAmount() - 1);
+        } else {
+            gui.setItem(SLOT_SCROLL, null);
+        }
+
+        if (!player.getInventory().addItem(resultBook).isEmpty()) {
+            player.getWorld().dropItem(player.getLocation(), resultBook);
+            player.sendMessage(ColorUtils.getMsg("disenchant.inventory-full"));
+        } else {
+            Component msg = ColorUtils.getMsg("disenchant.received-book")
+                    .replaceText(b -> b.matchLiteral("%enchant%").replacement(enchant.displayName(level)));
+            player.sendMessage(msg);
+        }
+
+        player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 1, 1);
+        player.sendMessage(ColorUtils.getMsg("disenchant.success"));
+
+        updateGuiState(gui);
+    }
+
     private void updateGuiState(Inventory gui) {
         ItemStack item = gui.getItem(SLOT_ITEM);
         ItemStack scroll = gui.getItem(SLOT_SCROLL);
 
         gui.setItem(SLOT_ITEM_BG, item != null && item.getType() != Material.AIR
-                ? createDecoItem(Material.LIME_STAINED_GLASS_PANE, "&aПредмет установлен")
-                : createDecoItem(Material.IRON_BARS, "&7⬇ Предмет сюда ⬇"));
+                ? createDecoItem(Material.LIME_STAINED_GLASS_PANE, "&aПредмет готов")
+                : createDecoItem(Material.IRON_BARS, "&7⬇ Предмет/Книга ⬇"));
 
         gui.setItem(SLOT_SCROLL_BG, scroll != null && scroll.getType() != Material.AIR
                 ? createDecoItem(Material.LIME_STAINED_GLASS_PANE, "&aСвиток установлен")
-                : createDecoItem(Material.IRON_BARS, "&7⬇ Свиток сюда ⬇"));
+                : createDecoItem(Material.IRON_BARS, "&7⬇ Свиток ⬇"));
 
         ItemStack glass = createDecoItem(Material.GRAY_STAINED_GLASS_PANE, " ");
         for (int i = 27; i < 54; i++) gui.setItem(i, glass);
 
         if (item == null || scroll == null || item.getType() == Material.AIR || scroll.getType() == Material.AIR) {
-            gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&c&lОжидание предметов..."));
+            gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&c&lОжидание..."));
             return;
         }
 
-        Map<Enchantment, Integer> enchants = item.getEnchantments();
+        Map<Enchantment, Integer> enchants = getEnchants(item);
         if (enchants.isEmpty()) {
-            gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&cНа предмете нет чар!"));
+            gui.setItem(SLOT_BUTTON, createDecoItem(Material.BARRIER, "&cНет зачарований!"));
             return;
         }
 
@@ -219,72 +312,34 @@ public class DisenchantListener implements Listener {
         }
     }
 
-    private void processRandomDisenchant(Player player, Inventory gui) {
-        ItemStack item = gui.getItem(SLOT_ITEM);
-        ItemStack scroll = gui.getItem(SLOT_SCROLL);
-        if (item == null || scroll == null) return;
-
-        Map<Enchantment, Integer> enchants = item.getEnchantments();
-        if (enchants.isEmpty()) return;
-
-        List<Enchantment> keys = new ArrayList<>(enchants.keySet());
-        Enchantment chosen = keys.get(ThreadLocalRandom.current().nextInt(keys.size()));
-
-        doDisenchant(player, gui, item, scroll, chosen, enchants.get(chosen));
+    private Map<Enchantment, Integer> getEnchants(ItemStack item) {
+        if (item == null) return Collections.emptyMap();
+        if (item.getType() == Material.ENCHANTED_BOOK) {
+            EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+            return meta != null ? meta.getStoredEnchants() : Collections.emptyMap();
+        }
+        return item.getEnchantments();
     }
 
-    private void processSelectDisenchant(Player player, Inventory gui, ItemStack clickedBook) {
-        if (clickedBook == null || !clickedBook.hasItemMeta()) return;
-
-        String keyStr = clickedBook.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(plugin, "ench_key"), PersistentDataType.STRING);
-        if (keyStr == null) return;
-
-        ItemStack item = gui.getItem(SLOT_ITEM);
-        ItemStack scroll = gui.getItem(SLOT_SCROLL);
-        if (item == null || scroll == null) return;
-
-        NamespacedKey key = NamespacedKey.fromString(keyStr);
-        if (key == null) return;
-
-        @SuppressWarnings("deprecation")
-        Enchantment enchant = Registry.ENCHANTMENT.get(key);
-
-        if (enchant == null || !item.containsEnchantment(enchant)) {
-            player.sendMessage(ColorUtils.format("&cЭтот чар уже снят!"));
-            updateGuiState(gui);
-            return;
+    private void removeEnchant(ItemStack item, Enchantment enchant) {
+        if (item.getType() == Material.ENCHANTED_BOOK) {
+            EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+            meta.removeStoredEnchant(enchant);
+            item.setItemMeta(meta);
+            if (meta.getStoredEnchants().isEmpty()) {
+                item.setType(Material.BOOK);
+            }
+        } else {
+            item.removeEnchantment(enchant);
         }
-
-        doDisenchant(player, gui, item, scroll, enchant, item.getEnchantmentLevel(enchant));
     }
 
-    private void doDisenchant(Player player, Inventory gui, ItemStack item, ItemStack scroll, Enchantment enchant, int level) {
-        ItemStack resultBook = new ItemStack(Material.ENCHANTED_BOOK);
-        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) resultBook.getItemMeta();
-        meta.addStoredEnchant(enchant, level, true);
-        resultBook.setItemMeta(meta);
-
-        item.removeEnchantment(enchant);
-
-        if (scroll.getAmount() > 1) {
-            scroll.setAmount(scroll.getAmount() - 1);
-        } else {
-            gui.setItem(SLOT_SCROLL, null);
+    private int getEnchantLevel(ItemStack item, Enchantment enchant) {
+        if (item.getType() == Material.ENCHANTED_BOOK) {
+            EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+            return meta.getStoredEnchantLevel(enchant);
         }
-
-        if (!player.getInventory().addItem(resultBook).isEmpty()) {
-            player.getWorld().dropItem(player.getLocation(), resultBook);
-            player.sendMessage(ColorUtils.getMsg("disenchant.inventory-full"));
-        } else {
-            Component msg = ColorUtils.getMsg("disenchant.received-book")
-                    .replaceText(b -> b.matchLiteral("%enchant%").replacement(enchant.displayName(level)));
-            player.sendMessage(msg);
-        }
-
-        player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 1, 1);
-        player.sendMessage(ColorUtils.getMsg("disenchant.success"));
-
-        updateGuiState(gui);
+        return item.getEnchantmentLevel(enchant);
     }
 
     public static class DisenchantHolder implements InventoryHolder {

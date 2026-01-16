@@ -74,6 +74,10 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
                     player.getInventory().addItem(VeldoriaItems.getEmptyPrism());
                     player.sendMessage(ColorUtils.format("&aВыдана Призма Души."));
                     break;
+                case "compass":
+                    player.getInventory().addItem(VeldoriaItems.getStructureCompass());
+                    player.sendMessage(ColorUtils.format("&aВыдан Компас Структур."));
+                    break;
                 default:
                     player.sendMessage(Component.text("Предмет не найден: " + itemType, NamedTextColor.RED));
             }
@@ -94,7 +98,7 @@ public class VeldoriaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
-            return List.of("pickaxe", "trap", "random_scroll", "select_scroll", "clock", "prism");
+            return List.of("pickaxe", "trap", "random_scroll", "select_scroll", "clock", "prism", "compass");
         }
 
         return List.of();

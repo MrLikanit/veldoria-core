@@ -14,6 +14,7 @@ import ru.veldoria.core.utils.ProtectionHook;
 import ru.veldoria.core.commands.PrestigeCommand;
 import ru.veldoria.core.managers.PrestigeManager;
 import ru.veldoria.core.listeners.PrestigeListener;
+import ru.veldoria.core.listeners.StructureCompassListener;
 
 import java.io.File;
 import java.util.Objects;
@@ -63,11 +64,13 @@ public final class VeldoriaCore extends JavaPlugin {
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new SpawnerInteractionListener(this), this);
+        pm.registerEvents(new SpawnerUpgradeListener(this), this);
         pm.registerEvents(new PvpTrapListener(this), this);
         pm.registerEvents(new DisenchantListener(this), this);
         pm.registerEvents(new DeathListener(), this);
         pm.registerEvents(new MobCatcherListener(this), this);
         pm.registerEvents(new PrestigeListener(this), this);
+        pm.registerEvents(new StructureCompassListener(this), this);
 
 
         getLogger().info("VeldoriaCore enabled successfully!");
